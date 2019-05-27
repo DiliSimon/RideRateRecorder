@@ -44,7 +44,9 @@ def read_city_list(mode=False):
 def get_fare_uber(city):
     start = city
     end = city
-    driver = webdriver.Chrome('./chromedriver')
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument('--headless')
+    driver = webdriver.Chrome('./chromedriver', options=chrome_options)
     try:
         driver.get("https://www.uber.com/in/en/price-estimate/")
         elem = driver.find_element_by_name("pickup")
@@ -90,7 +92,7 @@ def get_fare_lyft(city):
     end = city
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--headless')
-    driver = webdriver.Chrome('./chromedriver',options=chrome_options)
+    driver = webdriver.Chrome('./chromedriver', options=chrome_options)
     try:
         driver.get("https://www.lyft.com/rider/fare-estimate#estimate")
         elem = driver.find_element_by_xpath("//input[@placeholder='Enter pick-up location']")
@@ -113,12 +115,26 @@ def get_fare_lyft(city):
             output = output + table.find_element_by_tag_name('th').text+','
             for td in table.find_elements_by_tag_name('td'):
                 output = output + td.text + ','
-        print(output)
+        return output
     except Exception as err:
-        print(err)
         return city
 
 
 if __name__ == '__main__':
-    for c in read_city_list(True):
-        get_fare_lyft(c)
+    output = []
+    for idx, c in enumerate(read_city_list(True)):
+        if idx < 2400:
+            continue
+        result = get_fare_lyft(c)
+        print(result)
+        output.append(result)
+        if idx % 30 == 0:
+            with open('lyftrate3.csv', 'a', encoding='utf-8') as the_file:
+                for l in output:
+                    if l:
+                        the_file.write(l)
+                        the_file.write('\n')
+            print('wrote to file')
+            the_file.close()
+            output = []
+
